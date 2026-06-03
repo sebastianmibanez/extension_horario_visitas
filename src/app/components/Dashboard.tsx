@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem('condovisit-history');
+    const stored = localStorage.getItem('visitas-history');
     if (stored) setHistory(JSON.parse(stored));
   }, []);
 
@@ -54,7 +54,7 @@ export default function Dashboard() {
         };
         const updated = [newVisit, ...history];
         setHistory(updated);
-        localStorage.setItem('condovisit-history', JSON.stringify(updated));
+        localStorage.setItem('visitas-history', JSON.stringify(updated));
         setFeedback({ type: 'success', msg: sendToAdmin ? 'Correo enviado a Administración.' : 'Correo enviado a tu cuenta.' });
       } else {
         setFeedback({ type: 'error', msg: data.error || 'Error al enviar.' });
@@ -72,7 +72,7 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-extrabold text-gray-900">CondoVisit</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900">Extensión Horario Visitas</h1>
         <p className="text-gray-400 text-sm mt-1">Depto 215 · Sebastian Miranda</p>
       </div>
 
@@ -160,7 +160,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <p className="text-center text-xs text-gray-300">Sistema CondoVisit © 2026</p>
+      <p className="text-center text-xs text-gray-300">Depto 215 © 2026</p>
     </div>
   );
 }
