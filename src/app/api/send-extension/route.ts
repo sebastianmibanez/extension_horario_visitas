@@ -36,10 +36,13 @@ export async function POST(request: Request) {
       timeStyle: 'short',
     });
 
+    const isTestMode = process.env.TEST_MODE === 'true';
+    const recipient = isTestMode ? process.env.GMAIL_USER! : process.env.ADMIN_EMAIL!;
+
     await transporter.sendMail({
       from: `"Extension Horario Visitas" <${process.env.GMAIL_USER}>`,
-      to: process.env.ADMIN_EMAIL,
-      cc: process.env.GMAIL_USER,
+      to: recipient,
+      cc: isTestMode ? undefined : process.env.GMAIL_USER,
       subject: `🚗 Extensión Estac. - Apto ${aptNumber}${licensePlate ? ` - Placa ${licensePlate}` : ''}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
