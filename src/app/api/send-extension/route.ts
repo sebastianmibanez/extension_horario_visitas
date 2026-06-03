@@ -1,23 +1,12 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    console.error('Variables de entorno GMAIL_USER o GMAIL_APP_PASSWORD no configuradas');
-    return NextResponse.json({ error: 'El sistema no está configurado correctamente. Contacta al administrador.' }, { status: 503 });
-  }
-
-  if (!process.env.ADMIN_EMAIL) {
-    console.error('Variable de entorno ADMIN_EMAIL no configurada');
-    return NextResponse.json({ error: 'El sistema no está configurado correctamente. Contacta al administrador.' }, { status: 503 });
+  if (!process.env.RESEND_API_KEY) {
+    console.error('Variable de entorno RESEND_API_KEY no configurada');
+    return NextResponse.json({ error: 'El sistema no está configurado correctamente.' }, { status: 503 });
   }
 
   try {
@@ -28,24 +17,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
     }
 
-    const entryTime = new Date();
-
-    const formattedTime = entryTime.toLocaleString('es-CL', {
+    const formattedTime = new Date().toLocaleString('es-CL', {
       timeZone: 'America/Santiago',
       dateStyle: 'short',
       timeStyle: 'short',
     });
 
-    const toAdmin = sendToAdmin !== undefined ? sendToAdmin : process.env.TEST_MODE !== 'true';
-    const recipient = toAdmin ? process.env.ADMIN_EMAIL! : process.env.GMAIL_USER!;
+    const isAdmin = Boolean(sendToAdmin);
+    // Sin dominio verificado, Resend solo permite enviar al propio email.
+    // El botón "Administración" llega al Gmail con etiqueta [ADMIN] hasta tener dominio propio.
+    const recipient = process.env.GMAIL_USER!;
+    const subject = isAdmin
+      ? `🏢 [ADMIN] Extensión Estac. - Apto ${aptNumber}${licensePlate ? ` - Placa ${licensePlate}` : ''}`
+      : `🔵 [TEST] Extensión Estac. - Apto ${aptNumber}${licensePlate ? ` - Placa ${licensePlate}` : ''}`;
 
-    await transporter.sendMail({
-      from: `"Extension Horario Visitas" <${process.env.GMAIL_USER}>`,
-      to: recipient,
-      cc: toAdmin ? process.env.GMAIL_USER : undefined,
-      subject: `🚗 Extensión Estac. - Apto ${aptNumber}${licensePlate ? ` - Placa ${licensePlate}` : ''}`,
+    const { error } = await resend.emails.send({
+      from: 'Extension Horario Visitas <onboarding@resend.dev>',
+      to: [recipient],
+      subject,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+          ${isAdmin ? `<div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">
+            <strong>Modo Admin:</strong> Este correo está destinado a la administración del condominio. Pendiente verificación de dominio.
+          </div>` : ''}
           <h2 style="color: #2563eb; border-bottom: 2px solid #eee; padding-bottom: 10px;">Solicitud de Extensión de Estacionamiento</h2>
           <p>Hola Administración,</p>
           <p>El residente <strong>${residentName}</strong> del apartamento <strong>${aptNumber}</strong> ha notificado el uso de la extensión de horario para su visita.</p>
@@ -70,9 +64,14 @@ export async function POST(request: Request) {
       `,
     });
 
+    if (error) {
+      console.error('Error Resend:', error);
+      return NextResponse.json({ error: 'Error al enviar el correo.' }, { status: 500 });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error Servidor:', error);
-    return NextResponse.json({ error: 'Error al enviar el correo' }, { status: 500 });
+    return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
   }
 }
