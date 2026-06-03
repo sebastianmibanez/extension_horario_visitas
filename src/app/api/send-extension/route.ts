@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server';
-import { google } from 'googleapis';
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  'https://developers.google.com/oauthplayground'
-);
+async function getAccessToken(): Promise<string> {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID!,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      refresh_token: process.env.GOOGLE_REFRESH_TOKEN!,
+      grant_type: 'refresh_token',
+    }),
+  });
+
+  const data = await res.json();
+  if (data.error) throw new Error(`OAuth error: ${data.error} - ${data.error_description}`);
+  return data.access_token as string;
+}
 
 export async function POST(request: Request) {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REFRESH_TOKEN) {
-    console.error('Faltan variables de entorno de Google OAuth');
     return NextResponse.json({ error: 'El sistema no está configurado correctamente.' }, { status: 503 });
   }
-
-  oauth2Client.setCredentials({ refresh_token: process.env.GOOGLE_REFRESH_TOKEN });
 
   try {
     const body = await request.json();
@@ -39,11 +46,10 @@ export async function POST(request: Request) {
     const toAdmin = Boolean(sendToAdmin);
 
     if (!process.env.TEST_EMAIL || (toAdmin && !process.env.ADMIN_EMAIL)) {
-      console.error('Faltan variables de entorno de destinatarios');
       return NextResponse.json({ error: 'El sistema no está configurado correctamente.' }, { status: 503 });
     }
 
-    // Al enviar a admin, ponemos ambos en To: para que Gmail no suprima la copia propia
+    // Al enviar a admin, ambos van en To: (Gmail suprime CC al propio remitente)
     const recipient = toAdmin
       ? `${process.env.ADMIN_EMAIL}, ${process.env.TEST_EMAIL}`
       : process.env.TEST_EMAIL!;
@@ -80,13 +86,25 @@ export async function POST(request: Request) {
     const rawMessage = [...headers, '', html].join('\r\n');
     const encodedMessage = Buffer.from(rawMessage).toString('base64url');
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-    const res = await gmail.users.messages.send({
-      userId: 'me',
-      requestBody: { raw: encodedMessage },
+    const accessToken = await getAccessToken();
+
+    const gmailRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ raw: encodedMessage }),
     });
 
-    return NextResponse.json({ success: true, id: res.data.id });
+    const gmailData = await gmailRes.json();
+
+    if (!gmailRes.ok) {
+      console.error('Error Gmail API:', gmailData);
+      return NextResponse.json({ error: 'Error al enviar el correo.' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, id: gmailData.id });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : JSON.stringify(error);
     console.error('Error Servidor:', msg);
