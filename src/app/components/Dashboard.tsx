@@ -32,6 +32,7 @@ export default function Dashboard() {
     const target = sendToAdmin ? 'admin' : 'test';
     setLoading(target);
     setFeedback(null);
+    let success = false;
 
     try {
       const res = await fetch('/api/send-extension', {
@@ -43,6 +44,7 @@ export default function Dashboard() {
       const data = await res.json();
 
       if (res.ok) {
+        success = true;
         const newVisit: Visit = {
           id: Date.now().toString(),
           visitorName: DEFAULT_VISITOR.visitorName,
@@ -58,10 +60,10 @@ export default function Dashboard() {
         setFeedback({ type: 'error', msg: data.error || 'Error al enviar.' });
       }
     } catch {
-      setFeedback({ type: 'error', msg: 'Error de conexión.' });
+      setFeedback({ type: 'error', msg: 'Error de conexión. Verifica que el servidor esté activo.' });
     } finally {
       setLoading(null);
-      setTimeout(() => setFeedback(null), 4000);
+      if (success) setTimeout(() => setFeedback(null), 4000);
     }
   };
 
