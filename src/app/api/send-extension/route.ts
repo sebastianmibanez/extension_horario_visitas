@@ -87,8 +87,9 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true, id: res.data.id });
-  } catch (error) {
-    console.error('Error Servidor:', error);
-    return NextResponse.json({ error: 'Error al enviar el correo.' }, { status: 500 });
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Error Servidor:', msg);
+    return NextResponse.json({ error: 'Error al enviar el correo.', detail: msg }, { status: 500 });
   }
 }
