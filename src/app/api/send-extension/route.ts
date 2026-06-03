@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { aptNumber, residentName, visitorName, visitorRut, licensePlate } = body;
+    const { aptNumber, residentName, visitorName, visitorRut, licensePlate, sendToAdmin } = body;
 
     if (!aptNumber || !residentName || !visitorName || !visitorRut) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
@@ -36,13 +36,13 @@ export async function POST(request: Request) {
       timeStyle: 'short',
     });
 
-    const isTestMode = process.env.TEST_MODE === 'true';
-    const recipient = isTestMode ? process.env.GMAIL_USER! : process.env.ADMIN_EMAIL!;
+    const toAdmin = sendToAdmin !== undefined ? sendToAdmin : process.env.TEST_MODE !== 'true';
+    const recipient = toAdmin ? process.env.ADMIN_EMAIL! : process.env.GMAIL_USER!;
 
     await transporter.sendMail({
       from: `"Extension Horario Visitas" <${process.env.GMAIL_USER}>`,
       to: recipient,
-      cc: isTestMode ? undefined : process.env.GMAIL_USER,
+      cc: toAdmin ? process.env.GMAIL_USER : undefined,
       subject: `🚗 Extensión Estac. - Apto ${aptNumber}${licensePlate ? ` - Placa ${licensePlate}` : ''}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
