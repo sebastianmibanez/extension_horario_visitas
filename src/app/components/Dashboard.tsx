@@ -10,6 +10,14 @@ type Visit = {
   sentTo: 'test' | 'admin';
 };
 
+type VisitorInput = {
+  visitorName: string;
+  visitorRut: string;
+  licensePlate?: string;
+};
+
+type LoadingState = { source: 'quick' | 'other'; target: 'test' | 'admin' } | null;
+
 const DEFAULT_VISITOR = {
   aptNumber: '215',
   residentName: 'Sebastian Miranda',
@@ -18,10 +26,13 @@ const DEFAULT_VISITOR = {
   licensePlate: 'LWXR50',
 };
 
+const EMPTY_OTHER_VISITOR: VisitorInput = { visitorName: '', visitorRut: '', licensePlate: '' };
+
 export default function Dashboard() {
   const [history, setHistory] = useState<Visit[]>([]);
-  const [loading, setLoading] = useState<'test' | 'admin' | null>(null);
+  const [loading, setLoading] = useState<LoadingState>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [otherVisitor, setOtherVisitor] = useState<VisitorInput>(EMPTY_OTHER_VISITOR);
 
   useEffect(() => {
     // Hidratamos el historial desde localStorage tras el montaje para evitar
@@ -31,9 +42,9 @@ export default function Dashboard() {
     if (stored) setHistory(JSON.parse(stored));
   }, []);
 
-  const send = async (sendToAdmin: boolean) => {
+  const send = async (visitor: VisitorInput, sendToAdmin: boolean, source: 'quick' | 'other') => {
     const target = sendToAdmin ? 'admin' : 'test';
-    setLoading(target);
+    setLoading({ source, target });
     setFeedback(null);
     let success = false;
 
@@ -41,7 +52,12 @@ export default function Dashboard() {
       const res = await fetch('/api/send-extension', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...DEFAULT_VISITOR, sendToAdmin }),
+        body: JSON.stringify({
+          aptNumber: DEFAULT_VISITOR.aptNumber,
+          residentName: DEFAULT_VISITOR.residentName,
+          ...visitor,
+          sendToAdmin,
+        }),
       });
 
       const data = await res.json();
@@ -50,8 +66,8 @@ export default function Dashboard() {
         success = true;
         const newVisit: Visit = {
           id: Date.now().toString(),
-          visitorName: DEFAULT_VISITOR.visitorName,
-          licensePlate: DEFAULT_VISITOR.licensePlate,
+          visitorName: visitor.visitorName,
+          licensePlate: visitor.licensePlate,
           sentAt: new Date().toISOString(),
           sentTo: target,
         };
@@ -59,6 +75,7 @@ export default function Dashboard() {
         setHistory(updated);
         localStorage.setItem('visitas-history', JSON.stringify(updated));
         setFeedback({ type: 'success', msg: sendToAdmin ? 'Correo enviado a Administración.' : 'Correo enviado a tu cuenta.' });
+        if (source === 'other') setOtherVisitor(EMPTY_OTHER_VISITOR);
       } else {
         setFeedback({ type: 'error', msg: data.error || 'Error al enviar.' });
       }
@@ -73,6 +90,16 @@ export default function Dashboard() {
   const clearHistory = () => {
     setHistory([]);
     localStorage.removeItem('visitas-history');
+  };
+
+  const otherVisitorValid = otherVisitor.visitorName.trim() !== '' && otherVisitor.visitorRut.trim() !== '';
+
+  const handleOtherChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setOtherVisitor((prev) => ({
+      ...prev,
+      [name]: name === 'licensePlate' ? value.toUpperCase() : value,
+    }));
   };
 
   return (
@@ -106,20 +133,67 @@ export default function Dashboard() {
           </div>
           <div className="flex flex-col gap-2 min-w-[180px]">
             <button
-              onClick={() => send(false)}
+              onClick={() => send(DEFAULT_VISITOR, false, 'quick')}
               disabled={loading !== null}
               className="px-4 py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading === 'test' ? 'Enviando...' : '📧 Enviar a mi correo'}
+              {loading?.source === 'quick' && loading.target === 'test' ? 'Enviando...' : '📧 Enviar a mi correo'}
             </button>
             <button
-              onClick={() => send(true)}
+              onClick={() => send(DEFAULT_VISITOR, true, 'quick')}
               disabled={loading !== null}
               className="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
             >
-              {loading === 'admin' ? 'Enviando...' : '🏢 Enviar a Administración'}
+              {loading?.source === 'quick' && loading.target === 'admin' ? 'Enviando...' : '🏢 Enviar a Administración'}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Other visitor card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">Otra Visita</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <input
+            type="text"
+            name="visitorName"
+            value={otherVisitor.visitorName}
+            onChange={handleOtherChange}
+            placeholder="Nombre visitante"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none sm:col-span-2"
+          />
+          <input
+            type="text"
+            name="visitorRut"
+            value={otherVisitor.visitorRut}
+            onChange={handleOtherChange}
+            placeholder="RUT (12.345.678-9)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+          <input
+            type="text"
+            name="licensePlate"
+            value={otherVisitor.licensePlate}
+            onChange={handleOtherChange}
+            placeholder="Patente (opcional)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={() => send(otherVisitor, false, 'other')}
+            disabled={loading !== null || !otherVisitorValid}
+            className="flex-1 px-4 py-2 rounded-lg border-2 border-blue-600 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading?.source === 'other' && loading.target === 'test' ? 'Enviando...' : '📧 Enviar a mi correo'}
+          </button>
+          <button
+            onClick={() => send(otherVisitor, true, 'other')}
+            disabled={loading !== null || !otherVisitorValid}
+            className="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold text-sm hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          >
+            {loading?.source === 'other' && loading.target === 'admin' ? 'Enviando...' : '🏢 Enviar a Administración'}
+          </button>
         </div>
       </div>
 

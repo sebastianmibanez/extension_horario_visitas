@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 
 // Usa APIs de Node (Buffer) para construir el mensaje MIME.
 export const runtime = 'nodejs';
@@ -21,6 +22,11 @@ async function getAccessToken(): Promise<string> {
 }
 
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REFRESH_TOKEN) {
     return NextResponse.json({ error: 'El sistema no está configurado correctamente.' }, { status: 503 });
   }
