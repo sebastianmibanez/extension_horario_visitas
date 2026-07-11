@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Usa APIs de Node (Buffer) para construir el mensaje MIME.
+export const runtime = 'nodejs';
+
 async function getAccessToken(): Promise<string> {
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -70,7 +73,7 @@ export async function POST(request: Request) {
         </div>
 
         <p style="font-size: 12px; color: #9ca3af; margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-          Generado automáticamente por el sistema el ${new Date().toISOString()}
+          Generado automáticamente por el sistema el ${formattedTime} (hora de Santiago)
         </p>
       </div>
     `;

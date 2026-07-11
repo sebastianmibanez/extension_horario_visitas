@@ -24,7 +24,10 @@ export default function Dashboard() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   useEffect(() => {
+    // Hidratamos el historial desde localStorage tras el montaje para evitar
+    // desajustes de hidratación: el server renderiza sin acceso a localStorage.
     const stored = localStorage.getItem('visitas-history');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored) setHistory(JSON.parse(stored));
   }, []);
 
@@ -60,11 +63,16 @@ export default function Dashboard() {
         setFeedback({ type: 'error', msg: data.error || 'Error al enviar.' });
       }
     } catch {
-      setFeedback({ type: 'error', msg: 'Error de conexión. Verifica que el servidor esté activo.' });
+      setFeedback({ type: 'error', msg: 'Error de conexión. Intenta nuevamente.' });
     } finally {
       setLoading(null);
       if (success) setTimeout(() => setFeedback(null), 4000);
     }
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
+    localStorage.removeItem('visitas-history');
   };
 
   return (
@@ -117,8 +125,16 @@ export default function Dashboard() {
 
       {/* History */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Historial</p>
+          {history.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="text-xs font-medium text-gray-400 hover:text-red-600 transition"
+            >
+              Limpiar
+            </button>
+          )}
         </div>
         {history.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">Sin registros aún.</p>

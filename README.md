@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Extensión Horario Visitas
 
-## Getting Started
+App interna (Depto 215) para notificar a la administración del condominio la **extensión de horario de estacionamiento** de una visita. Al enviar, registra la hora de entrada y calcula el término de las 5 horas base y de la extensión (14 horas totales), y envía el correo desde tu Gmail vía la **Gmail API (OAuth2)**.
 
-First, run the development server:
+Construido con **Next.js 16** (App Router) + **React 19** + **Tailwind CSS 4**.
+
+## Requisitos
+
+- Node.js **20.9+**
+- Una app de Google Cloud con la **Gmail API** habilitada y un refresh token con scope `gmail.send`.
+
+## Variables de entorno
+
+Copia `.env.example` a `.env.local` y complétalas (ninguna se commitea):
+
+| Variable | Descripción |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | Client ID del cliente OAuth 2.0. |
+| `GOOGLE_CLIENT_SECRET` | Client secret del cliente OAuth 2.0. |
+| `GOOGLE_REFRESH_TOKEN` | Refresh token con scope `https://www.googleapis.com/auth/gmail.send`. |
+| `TEST_EMAIL` | Tu Gmail: remitente y copia en los envíos a administración. |
+| `ADMIN_EMAIL` | Correo de la administración. |
+
+## Desarrollo local
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy en Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Sube el repo a GitHub (ya está en `origin`).
+2. En [vercel.com/new](https://vercel.com/new) importa el repositorio. Vercel detecta Next.js automáticamente (no hace falta configurar build ni output).
+3. En **Settings → Environment Variables** carga las 5 variables de la tabla de arriba (para *Production* y *Preview*).
+4. Deploy. Cada push a `main` genera un despliegue de producción.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Nota: las credenciales de Google (`client_secret_*.json` y `.env.local`) **nunca** se suben al repo — están en `.gitignore`.
