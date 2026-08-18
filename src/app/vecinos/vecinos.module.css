@@ -1,0 +1,347 @@
+/* Los colores salen de los tokens globales (globals.css): claro y oscuro. */
+.page {
+  --radius: 14px;
+
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page * {
+  box-sizing: border-box;
+}
+
+.sheet {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 38px 22px 60px;
+}
+
+/* ── Tipografía base ─────────────────────────────── */
+
+.page h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.1rem, 8.5vw, 2.9rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0 0 18px;
+}
+
+.page h1 em {
+  font-style: italic;
+  color: var(--pine);
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 14px;
+}
+
+.lede {
+  font-size: 1.02rem;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 42ch;
+}
+
+.building {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--ochre);
+  margin: 0 0 10px;
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 34px 0;
+}
+
+.page section {
+  margin-bottom: 34px;
+}
+
+/* ── Tarjetas de grupo ───────────────────────────── */
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 16px 17px;
+  margin-bottom: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  border-color: var(--pine-soft);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px -12px rgba(20, 72, 60, 0.45);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 3px;
+}
+
+.cardIcon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--pine);
+  display: grid;
+  place-items: center;
+}
+
+.cardIcon svg {
+  width: 21px;
+  height: 21px;
+  fill: var(--card);
+}
+
+.cardBody {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cardTitle {
+  display: block;
+  font-weight: 600;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+  margin: 1px 0 3px;
+}
+
+.cardDesc {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.cardArrow {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--ink-faint);
+  font-size: 1.1rem;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.card:hover .cardArrow {
+  transform: translateX(3px);
+  color: var(--pine);
+}
+
+.cardPending {
+  background: var(--line-soft);
+  border-style: dashed;
+}
+
+.cardPending .cardIcon {
+  background: var(--pine-soft);
+}
+
+/* ── Bloque de emergencia ────────────────────────── */
+
+.draftNote {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ochre);
+  background: rgba(180, 129, 60, 0.09);
+  border: 1px solid rgba(180, 129, 60, 0.28);
+  border-radius: 999px;
+  padding: 5px 11px;
+  margin: 0 0 16px;
+}
+
+.page details {
+  border-bottom: 1px solid var(--line-soft);
+  padding: 2px 0;
+}
+
+.page details:first-of-type {
+  border-top: 1px solid var(--line-soft);
+}
+
+.page summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 26px 14px 0;
+  font-weight: 500;
+  font-size: 0.97rem;
+  position: relative;
+}
+
+.page summary::-webkit-details-marker {
+  display: none;
+}
+
+.page summary:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.page summary::after {
+  content: "+";
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ochre);
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.page details[open] summary::after {
+  content: "−";
+}
+
+.page details ol {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.page details ol li {
+  margin-bottom: 7px;
+}
+
+.page details ol li::marker {
+  color: var(--ochre);
+  font-weight: 600;
+}
+
+/* ── Contactos ───────────────────────────────────── */
+
+.contacts {
+  margin-top: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.contact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--card);
+}
+
+.contact:last-child {
+  border-bottom: 0;
+}
+
+.contact:hover {
+  background: var(--line-soft);
+}
+
+.contact:focus-visible {
+  outline: 2px solid var(--pine);
+  outline-offset: -2px;
+}
+
+.contactName {
+  font-size: 0.92rem;
+}
+
+.contactName small {
+  display: block;
+  color: var(--ink-faint);
+  font-size: 0.78rem;
+}
+
+.contactNum {
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--pine);
+  white-space: nowrap;
+}
+
+/* ── Reglas (margen anotado) ─────────────────────── */
+
+.rules {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 18px;
+  border-left: 2px solid rgba(180, 129, 60, 0.35);
+}
+
+.rules li {
+  position: relative;
+  font-size: 0.93rem;
+  color: var(--ink-soft);
+  margin-bottom: 15px;
+}
+
+.rules li:last-child {
+  margin-bottom: 0;
+}
+
+.rules li::before {
+  content: "";
+  position: absolute;
+  left: -23px;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ochre);
+}
+
+.rules strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Pie ─────────────────────────────────────────── */
+
+.footer {
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  font-size: 0.82rem;
+  color: var(--ink-faint);
+}
+
+.footer p {
+  margin: 0 0 7px;
+}
+
+@media print {
+  .page {
+    background: #fff;
+  }
+
+  .card,
+  .contacts {
+    break-inside: avoid;
+  }
+
+  .page details ol {
+    display: block !important;
+  }
+}

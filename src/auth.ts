@@ -1,11 +1,6 @@
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 
-const authorizedEmails = (process.env.AUTHORIZED_EMAILS ?? '')
-  .split(',')
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Google({
@@ -14,11 +9,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   session: { strategy: 'jwt' },
-  pages: { signIn: '/login' },
+  pages: { signIn: '/' },
   callbacks: {
+    // Entra cualquier cuenta de Google verificada: el filtro real es el
+    // registro de residentes (src/lib/residentes.ts), que exige aprobación
+    // antes de dejar mandar correos a la administración.
     async signIn({ user, profile }) {
       const email = (profile?.email ?? user.email ?? '').toLowerCase();
-      if (!email || !authorizedEmails.includes(email)) return false;
+      if (!email) return false;
       if (profile?.email_verified === false) return false;
       return true;
     },
