@@ -20,11 +20,16 @@ export type Residente = {
   creadoEn: string;
 };
 
+// El panel de Upstash copia los valores entre comillas y pegados así en el
+// formulario de Vercel quedan como parte del valor, con lo que la URL sale
+// inválida. Se limpian acá en vez de depender de cómo se pegaron.
+const limpiarEnv = (v?: string) => v?.trim().replace(/^["']|["']$/g, '');
+
 // Cliente por llamada: es HTTP sin conexión persistente, y así el build no
 // revienta cuando las env vars todavía no están.
 function redis() {
-  const url = process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN;
+  const url = limpiarEnv(process.env.UPSTASH_REDIS_REST_URL ?? process.env.KV_REST_API_URL);
+  const token = limpiarEnv(process.env.UPSTASH_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN);
   if (!url || !token) throw new Error('Falta configurar Upstash Redis');
   return new Redis({ url, token });
 }
