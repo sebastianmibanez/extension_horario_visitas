@@ -29,11 +29,21 @@ const inputClass =
   'w-full px-3.5 py-2.5 bg-paper border border-line rounded-xl text-ink placeholder:text-ink-faint text-sm focus:border-pine focus:ring-1 focus:ring-pine focus:outline-none';
 const eyebrow = 'text-[0.7rem] font-semibold tracking-[0.13em] uppercase text-ink-faint';
 
+// "HH:MM" de hoy en hora local; si todavía no llega, fue ayer (entró 23:30, se avisa 00:10).
+function entradaISO(hhmm: string) {
+  const [h, m] = hhmm.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  if (d > new Date()) d.setDate(d.getDate() - 1);
+  return d.toISOString();
+}
+
 export default function Dashboard({ depto, nombre }: { depto: string; nombre: string }) {
   const [history, setHistory] = useState<Visit[]>([]);
   const [loading, setLoading] = useState<LoadingState>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
   const [visitor, setVisitor] = useState<VisitorInput>(EMPTY_VISITOR);
+  const [entryTime, setEntryTime] = useState('');
 
   useEffect(() => {
     // Historial y última visita viven solo en este navegador: el servidor no
@@ -55,7 +65,11 @@ export default function Dashboard({ depto, nombre }: { depto: string; nombre: st
       const res = await fetch('/api/send-extension', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...visitor, sendToAdmin }),
+        body: JSON.stringify({
+          ...visitor,
+          sendToAdmin,
+          entryTime: entryTime ? entradaISO(entryTime) : undefined,
+        }),
       });
 
       const data = await res.json();
@@ -74,6 +88,7 @@ export default function Dashboard({ depto, nombre }: { depto: string; nombre: st
         localStorage.setItem('visitas-history', JSON.stringify(updated));
         // Se recuerda la última visita para no retipearla la próxima vez.
         localStorage.setItem('ultima-visita', JSON.stringify(visitor));
+        setEntryTime('');
         setFeedback({
           type: 'success',
           msg: sendToAdmin ? 'Correo enviado a Administración.' : 'Correo enviado a tu cuenta.',
@@ -158,6 +173,15 @@ export default function Dashboard({ depto, nombre }: { depto: string; nombre: st
             placeholder="Patente (opcional)"
             className={inputClass}
           />
+          <label className="sm:col-span-2 flex items-center gap-3 text-sm text-ink-soft">
+            <span className="whitespace-nowrap">Hora de ingreso (opcional)</span>
+            <input
+              type="time"
+              value={entryTime}
+              onChange={(e) => setEntryTime(e.target.value)}
+              className={inputClass}
+            />
+          </label>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <button
@@ -176,7 +200,8 @@ export default function Dashboard({ depto, nombre }: { depto: string; nombre: st
           </button>
         </div>
         <p className="text-xs text-ink-faint mt-4">
-          Se registra la hora de entrada y se calculan las 5 horas base y la extensión (14 en total).
+          Si no indicás la hora de ingreso se usa la del envío. Desde ahí se calculan las 5 horas
+          base y la extensión (14 en total).
         </p>
       </section>
 

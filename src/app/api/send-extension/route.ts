@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { visitorName, visitorRut, licensePlate, sendToAdmin } = body;
+    const { visitorName, visitorRut, licensePlate, sendToAdmin, entryTime } = body;
 
     if (!visitorName || !visitorRut) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
@@ -48,7 +48,17 @@ export async function POST(request: Request) {
       });
 
     const HORA = 60 * 60 * 1000;
-    const entryDate = new Date();
+    const now = new Date();
+    // Hora de ingreso opcional (por si el correo se manda tarde). Más de 14 h
+    // atrás ya no tiene sentido: la extensión completa terminó.
+    const entryDate = entryTime ? new Date(entryTime) : now;
+    const atras = now.getTime() - entryDate.getTime();
+    if (Number.isNaN(atras) || atras < -5 * 60 * 1000 || atras > 14 * HORA) {
+      return NextResponse.json(
+        { error: 'La hora de ingreso tiene que ser de las últimas 14 horas.' },
+        { status: 400 },
+      );
+    }
     const formattedTime = fmt(entryDate);
     const baseEnd = fmt(new Date(entryDate.getTime() + 5 * HORA));
     const extensionEnd = fmt(new Date(entryDate.getTime() + 14 * HORA));
@@ -65,13 +75,13 @@ export async function POST(request: Request) {
           <p style="margin: 8px 0;"><strong>Visita:</strong> ${escapar(visitorName)}</p>
           <p style="margin: 8px 0;"><strong>RUT:</strong> ${escapar(visitorRut)}</p>
           ${licensePlate ? `<p style="margin: 8px 0;"><strong>Patente Vehículo:</strong> ${escapar(licensePlate)}</p>` : ''}
-          <p style="margin: 8px 0;"><strong>Hora de Entrada (Sistema):</strong> ${formattedTime}</p>
+          <p style="margin: 8px 0;"><strong>Hora de Entrada (${entryTime ? 'indicada por el residente' : 'Sistema'}):</strong> ${formattedTime}</p>
           <p style="margin: 8px 0;"><strong>Término 5 horas base:</strong> ${baseEnd}</p>
           <p style="margin: 8px 0;"><strong>Término Extensión:</strong> ${extensionEnd}</p>
         </div>
 
         <p style="font-size: 12px; color: #9ca3af; margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-          Generado automáticamente por el sistema el ${formattedTime} (hora de Santiago). Responder a este correo le llega directo al residente.
+          Generado automáticamente por el sistema el ${fmt(now)} (hora de Santiago). Responder a este correo le llega directo al residente.
         </p>
       </div>
     `;
