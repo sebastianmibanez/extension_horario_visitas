@@ -29,15 +29,6 @@ const inputClass =
   'w-full px-3.5 py-2.5 bg-paper border border-line rounded-xl text-ink placeholder:text-ink-faint text-sm focus:border-pine focus:ring-1 focus:ring-pine focus:outline-none';
 const eyebrow = 'text-[0.7rem] font-semibold tracking-[0.13em] uppercase text-ink-faint';
 
-// "HH:MM" de hoy en hora local; si todavía no llega, fue ayer (entró 23:30, se avisa 00:10).
-function entradaISO(hhmm: string) {
-  const [h, m] = hhmm.split(':').map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  if (d > new Date()) d.setDate(d.getDate() - 1);
-  return d.toISOString();
-}
-
 export default function Dashboard({ depto, nombre }: { depto: string; nombre: string }) {
   const [history, setHistory] = useState<Visit[]>([]);
   const [loading, setLoading] = useState<LoadingState>(null);
@@ -68,7 +59,8 @@ export default function Dashboard({ depto, nombre }: { depto: string; nombre: st
         body: JSON.stringify({
           ...visitor,
           sendToAdmin,
-          entryTime: entryTime ? entradaISO(entryTime) : undefined,
+          // datetime-local viene sin zona: new Date() lo lee como hora local.
+          entryTime: entryTime ? new Date(entryTime).toISOString() : undefined,
         }),
       });
 
@@ -173,10 +165,10 @@ export default function Dashboard({ depto, nombre }: { depto: string; nombre: st
             placeholder="Patente (opcional)"
             className={inputClass}
           />
-          <label className="sm:col-span-2 flex items-center gap-3 text-sm text-ink-soft">
-            <span className="whitespace-nowrap">Hora de ingreso (opcional)</span>
+          <label className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-sm text-ink-soft">
+            <span className="whitespace-nowrap">Fecha y hora de ingreso (opcional)</span>
             <input
-              type="time"
+              type="datetime-local"
               value={entryTime}
               onChange={(e) => setEntryTime(e.target.value)}
               className={inputClass}

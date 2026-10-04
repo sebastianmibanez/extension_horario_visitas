@@ -49,13 +49,13 @@ export async function POST(request: Request) {
 
     const HORA = 60 * 60 * 1000;
     const now = new Date();
-    // Hora de ingreso opcional (por si el correo se manda tarde). Más de 14 h
-    // atrás ya no tiene sentido: la extensión completa terminó.
+    // Hora de ingreso opcional, por si el correo se manda tarde (incluso al día
+    // siguiente). Se acota a la última semana para no aceptar fechas absurdas.
     const entryDate = entryTime ? new Date(entryTime) : now;
     const atras = now.getTime() - entryDate.getTime();
-    if (Number.isNaN(atras) || atras < -5 * 60 * 1000 || atras > 14 * HORA) {
+    if (Number.isNaN(atras) || atras < -5 * 60 * 1000 || atras > 7 * 24 * HORA) {
       return NextResponse.json(
-        { error: 'La hora de ingreso tiene que ser de las últimas 14 horas.' },
+        { error: 'La hora de ingreso tiene que ser de los últimos 7 días y no futura.' },
         { status: 400 },
       );
     }
